@@ -19,7 +19,8 @@ double mu = 1e0;
 double NbIter = 5e4;
 double seuil = 1e-5;
 
-struct res_sim {
+struct res_sim
+{
     double loss;
     double wait_avg;
     double wait_max;
@@ -29,12 +30,14 @@ struct res_sim {
 };
 
 // Define the transition function
-void transition(double lambda_e, double lambda_u, double mu, int S, double G, int x1, int x2, int x3, double* duree, int etat[3]) {
+void transition(double lambda_e, double lambda_u, double mu, int S, double G, int x1, int x2, int x3, double *duree, int etat[3])
+{
     int etats[5][3];
     double taux[5];
     int count = 0;
 
-    if (x1 > 0) {
+    if (x1 > 0)
+    {
         etats[count][0] = x1 - 1;
         etats[count][1] = x2;
         etats[count][2] = x3;
@@ -42,12 +45,16 @@ void transition(double lambda_e, double lambda_u, double mu, int S, double G, in
         count++;
     }
 
-    if (x2 > 0) {
-        if ((x1 + x2 <= S - G) && x3 > 0) {
+    if (x2 > 0)
+    {
+        if ((x1 + x2 <= S - G) && x3 > 0)
+        {
             etats[count][0] = x1;
             etats[count][1] = x2;
             etats[count][2] = x3 - 1;
-        } else {
+        }
+        else
+        {
             etats[count][0] = x1;
             etats[count][1] = x2 - 1;
             etats[count][2] = x3;
@@ -56,7 +63,8 @@ void transition(double lambda_e, double lambda_u, double mu, int S, double G, in
         count++;
     }
 
-    if (x1 + x2 < S) {
+    if (x1 + x2 < S)
+    {
         etats[count][0] = x1 + 1;
         etats[count][1] = x2;
         etats[count][2] = x3;
@@ -64,12 +72,15 @@ void transition(double lambda_e, double lambda_u, double mu, int S, double G, in
         count++;
     }
 
-    if (x1 + x2 < S - G) {
+    if (x1 + x2 < S - G)
+    {
         etats[count][0] = x1;
         etats[count][1] = x2 + 1;
         etats[count][2] = x3;
         taux[count] = lambda_e;
-    } else {
+    }
+    else
+    {
         etats[count][0] = x1;
         etats[count][1] = x2;
         etats[count][2] = x3 + 1;
@@ -78,7 +89,8 @@ void transition(double lambda_e, double lambda_u, double mu, int S, double G, in
     count++;
 
     double param_expo = 0.0;
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++)
+    {
         param_expo += taux[i];
     }
 
@@ -87,9 +99,11 @@ void transition(double lambda_e, double lambda_u, double mu, int S, double G, in
     double cumulative_sum = 0.0;
     double u = (double)rand() / RAND_MAX;
     int index = 0;
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++)
+    {
         cumulative_sum += taux[i] / param_expo;
-        if (u <= cumulative_sum) {
+        if (u <= cumulative_sum)
+        {
             index = i;
             break;
         }
@@ -100,7 +114,8 @@ void transition(double lambda_e, double lambda_u, double mu, int S, double G, in
     etat[2] = etats[index][2];
 }
 
-void simu(double lambda_e, double lambda_u, double mu, int S, double G, double NbIter, struct res_sim *res) {
+void simu(double lambda_e, double lambda_u, double mu, int S, double G, double NbIter, struct res_sim *res)
+{
     int e[3] = {0, 0, 0};
     double cumul = 0.0;
     double temps_total = 0.0;
@@ -112,23 +127,28 @@ void simu(double lambda_e, double lambda_u, double mu, int S, double G, double N
     double urllc_max = 0.0;
     double embb_tot = 0.0;
 
-    while (temps_total < horizon) {
+    while (temps_total < horizon)
+    {
         t = 0.0;
         int e_new[3] = {0, 0, 0};
         transition(lambda_e, lambda_u, mu, S, G, e[0], e[1], e[2], &t, e_new);
         temps_total += t;
         wait_avg += e[2] * t;
         wait_max = (wait_max > e[2]) ? wait_max : e[2];
-        if (e_new[0] > e[0]) {
+        if (e_new[0] > e[0])
+        {
             urllc_tot += 1;
         }
-        if (e_new[0] > urllc_max) {
+        if (e_new[0] > urllc_max)
+        {
             urllc_max = e_new[0];
         }
-        if (e_new[1] > e[1]) {
+        if (e_new[1] > e[1])
+        {
             embb_tot += 1;
         }
-        if (e[0] + e[1] == S) {
+        if (e[0] + e[1] == S)
+        {
             cumul += t;
         }
         e[0] = e_new[0];
@@ -136,7 +156,8 @@ void simu(double lambda_e, double lambda_u, double mu, int S, double G, double N
         e[2] = e_new[2];
     }
 
-    if (e[0] + e[1] == S) {
+    if (e[0] + e[1] == S)
+    {
         cumul += t - (temps_total - horizon);
     }
 
@@ -148,30 +169,38 @@ void simu(double lambda_e, double lambda_u, double mu, int S, double G, double N
     res->embb_tot = embb_tot;
 }
 
-void show_progress_bar(int completed, int total) {
+void show_progress_bar(int completed, int total)
+{
     int bar_width = 50; // Width of the progress bar
     float progress = (float)completed / total;
     int pos = (int)(bar_width * progress);
 
     printf("[");
-    for (int i = 0; i < bar_width; i++) {
-        if (i < pos) printf("=");
-        else if (i == pos) printf(">");
-        else printf(" ");
+    for (int i = 0; i < bar_width; i++)
+    {
+        if (i < pos)
+            printf("=");
+        else if (i == pos)
+            printf(">");
+        else
+            printf(" ");
     }
     printf("] %d/%d   \r", completed, total);
     fflush(stdout);
 }
 
-int valeur_canaux_garde_1(double lambda_e, double lambda_u, double mu, int S, double NbIter, double seuil, struct res_sim *res_mean) {
+int valeur_canaux_garde_1(double lambda_e, double lambda_u, double mu, int S, double NbIter, double seuil, struct res_sim *res_mean)
+{
     int G = -1;
     double a = 1.0;
 
-    while (a > seuil) {
+    while (a > seuil)
+    {
         G++;
-        *res_mean = (struct res_sim){ 0.0, 0.0, 0.0, 0.0, 0.0 };
+        *res_mean = (struct res_sim){0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-        for (int i = 0; i < NB_SIM; i++) {
+        for (int i = 0; i < NB_SIM; i++)
+        {
             struct res_sim res;
             simu(lambda_e, lambda_u, mu, S, G, NbIter, &res);
             res_mean->loss += res.loss;
@@ -196,8 +225,10 @@ int valeur_canaux_garde_1(double lambda_e, double lambda_u, double mu, int S, do
 }
 
 // Main function to run the simulation
-int main(int argc, char *argv[]) {
-    if (argc < 2) {
+int main(int argc, char *argv[])
+{
+    if (argc < 2)
+    {
         printf("One arg is required!\n");
         return 1;
     }
@@ -226,7 +257,8 @@ int main(int argc, char *argv[]) {
     struct res_sim *res = mmap(NULL, num_steps * sizeof(struct res_sim), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     int *progress = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
-    if (R == MAP_FAILED || progress == MAP_FAILED || res == MAP_FAILED) {
+    if (R == MAP_FAILED || progress == MAP_FAILED || res == MAP_FAILED)
+    {
         perror("mmap failed");
         return 1;
     }
@@ -238,21 +270,24 @@ int main(int argc, char *argv[]) {
     double horizon[num_steps];
 
     // Fork processes and do work in parallel
-    for (int p = 0; p < NB_PROCESS; p++) {
+    for (int p = 0; p < NB_PROCESS; p++)
+    {
         pid_t pid = fork();
 
-        if (pid == 0) { // Child process
-            for (int i = START + p * STEP; i <= END; i += NB_PROCESS * STEP) {
-                int index = (i - START) / STEP;  // Calculate the index in the reduced array
+        if (pid == 0)
+        { // Child process
+            for (int i = START + p * STEP; i <= END; i += NB_PROCESS * STEP)
+            {
+                int index = (i - START) / STEP; // Calculate the index in the reduced array
                 double lambda_e = i * 1.0;
                 horizon[index] = NbIter / (lambda_e + lambda_u);
 
-                struct res_sim res_temp = {0.0, 0.0, 0.0, 0.0, 0.0};
+                struct res_sim res_temp = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
                 R[index] = valeur_canaux_garde_1(lambda_e, lambda_u, mu, S, NbIter, seuil, &res_temp);
                 res[index] = res_temp;
 
                 __sync_fetch_and_add(progress, 1); // Atomically increment progress
-            	printf("E=%d, G=%f, L=%f, U=%f, T=%f, B=%f, A=%f, M=%f, H=%f,\n", i, R[index], res[index].loss, res[index].urllc_tot, res[index].urllc_max, res[index].embb_tot, res[index].wait_avg, res[index].wait_max, horizon[index]);
+                printf("E=%d, G=%f, L=%f, U=%f, T=%f, B=%f, A=%f, M=%f, H=%f,\n", i, R[index], res[index].loss, res[index].urllc_tot, res[index].urllc_max, res[index].embb_tot, res[index].wait_avg, res[index].wait_max, horizon[index]);
             }
 
             // Child process exits after its work is done
@@ -261,9 +296,11 @@ int main(int argc, char *argv[]) {
     }
 
     int prev_progress = 0;
-    while (prev_progress < num_steps) {
+    while (prev_progress < num_steps)
+    {
         usleep(100000); // Sleep for a short time (100ms)
-        if (*progress != prev_progress) {
+        if (*progress != prev_progress)
+        {
             prev_progress = *progress;
             show_progress_bar(prev_progress, num_steps); // Update progress bar
         }
@@ -272,7 +309,8 @@ int main(int argc, char *argv[]) {
     printf("\n");
 
     // Parent process waits for all children to finish
-    for (int p = 0; p < NB_PROCESS; p++) {
+    for (int p = 0; p < NB_PROCESS; p++)
+    {
         wait(NULL);
     }
 
@@ -286,7 +324,8 @@ int main(int argc, char *argv[]) {
 
     // Open the CSV file for writing
     FILE *file = fopen(filename, "w");
-    if (file == NULL) {
+    if (file == NULL)
+    {
         printf("Error opening file!\n");
         return 1;
     }
@@ -296,16 +335,17 @@ int main(int argc, char *argv[]) {
     int minutes = ((int)time_spent % 3600) / 60;
     int seconds = (int)time_spent % 60;
 
-    // Write the header for the CSV file 
+    // Write the header for the CSV file
     fprintf(file, "E;G;LoadE;PerG;Loss;WaitAvg;WaitMax;URLLC_Tot;URLLC_Max;eMBB_Tot;Horizon;;# %d hrs %d mins %d s\n", hours, minutes, seconds);
     fflush(file);
 
-    for (int i = START; i <= END; i += STEP) {
+    for (int i = START; i <= END; i += STEP)
+    {
         int index = (i - START) / STEP;
-        double G = R[index];  // Get the value of G from shared memory
-        double LoadE = i / (mu * ((double)(S - G)));  // Calculate LoadE as E/mu*(S-G)
-        double PerG = (G / (double)S) * 100.0;  // Calculate PerG as (G/S)*100
-        double horizon = NbIter / (i + lambda_u);  // Calculate Horizon
+        double G = R[index];                         // Get the value of G from shared memory
+        double LoadE = i / (mu * ((double)(S - G))); // Calculate LoadE as E/mu*(S-G)
+        double PerG = (G / (double)S) * 100.0;       // Calculate PerG as (G/S)*100
+        double horizon = NbIter / (i + lambda_u);    // Calculate Horizon
 
         // Extract values from the res_sim struct
         double loss = res[index].loss;
@@ -317,7 +357,7 @@ int main(int argc, char *argv[]) {
 
         // Write all the values to the file
         fprintf(file, "%d;%f;%f;%f;%f;%f;%f;%f;%f;%f;%f;\n", i, G, LoadE, PerG, loss, wait_avg, wait_max, urllc_tot, urllc_max, embb_tot, horizon);
-        fflush(file);  // Ensure the data is written to the file
+        fflush(file); // Ensure the data is written to the file
     }
 
     printf("Time: %d hrs %d mins %d s\n", hours, minutes, seconds);
